@@ -13,7 +13,7 @@ This project is a heavy modification and evolution of existing works by the M5St
 ## 📸 Screenshots
 
 ![Main Interface](screenshots/main_interface.jpg)
-*(Place screenshot here)*
+
 
 ## ✨ Features
 
