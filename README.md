@@ -1,164 +1,98 @@
-# 🎵 M5Mp3 Winamp Player for Cardputer-Adv
+# 🎵 Mp3 Player for Cardputer-Adv (Dual Screen) - v0.1
 
-Winamp-style MP3 player for M5Stack Cardputer-Adv with ES8311 audio codec support.
+A robust audio player for the **M5Stack Cardputer-Adv** featuring a custom GUI on an external **ILI9341** screen, with fallback support for the internal display. Features SD card file navigation (with subdirectory support), MP3/FLAC playback, and persistent settings.
 
-## 🙏 Credits
+## 🙏 Credits & Inspiration
 
-This project is adapted from the original **M5Mp3** by [VolosR](https://github.com/VolosR/M5Mp3).
+This project is a heavy modification and evolution of existing works by the M5Stack community.
 
-**Original Project:** https://github.com/VolosR/M5Mp3  
-**Original Author:** VolosR  
-**License:** Same as original M5Mp3 project
-
-Many thanks to VolosR for creating the original Winamp-style interface and audio playback implementation! This adaptation adds support for M5Stack Cardputer-Adv with ES8311 audio codec.
+* **Base Code:** Adapted from [M5Mp3 Winamp Player for Cardputer-Adv](https://github.com/AndyAiCardputer/mp3-player-winamp-cardputer-adv) by **AndyAiCardputer** (originally based on **VolosR**'s work).
+* **Dual Screen Inspiration:** Heavily inspired by the work done on the [ZX Spectrum Cardputer External Display](https://github.com/AndyAiCardputer/zx-spectrum-cardputer-external/discussions/2), which provided the foundation for the HSPI external display implementation.
+* **AI Co-Authors:** All code logic, refactoring, and graphic assets (stored as C++ Hex Arrays) were generated/assisted by **ChatGPT** and **Gemini Pro**.
 
 ## 📸 Screenshots
 
-### Main Interface
-![Main Interface](screenshots/2025-11-13%2016.40.08.jpg)
-
-Winamp-style MP3 player running on M5Stack Cardputer-Adv
+![Main Interface](screenshots/main_interface.jpg)
+*(Place screenshot here)*
 
 ## ✨ Features
 
-- ✅ **Winamp-style interface** - Classic retro look
-- ✅ **MP3 playback** from SD card
-- ✅ **ES8311 audio codec** support via M5Cardputer.Speaker
-- ✅ **File browser** - Navigate through MP3 files
-- ✅ **Volume control** - 5 levels (0-20)
-- ✅ **Brightness control** - 5 levels
-- ✅ **Battery indicator**
-- ✅ **Visual equalizer** - Animated bars
-- ✅ **FreeRTOS tasks** - Separate TFT and Audio tasks
-
-## 📦 Required Libraries
-
-Install via Arduino Library Manager or PlatformIO:
-
-1. **ESP8266Audio** - MP3 decoder
-   - URL: https://github.com/earlephilhower/ESP8266Audio
-   - Version: Latest
-
-2. **M5Cardputer** - Already installed
-
-3. ~~**ESP32Time**~~ - Not required (replaced with simple millis() based timer)
-
-## 🎮 Controls
-
-| Key | Function |
-|-----|----------|
-| `A` | Play/Pause ▶️⏸️ |
-| `N` | Next track ⏭️ |
-| `P` | Previous track ⏮️ |
-| `V` | Volume up 🔊 (cycles 5→10→15→20→5) |
-| `L` | Brightness control 💡 |
-| `B` | Random track 🎲 |
-| `ENTER` | Restart current track 🔄 |
-| `;` | Scroll up in list |
-| `.` | Scroll down in list |
-
-## 💾 SD Card Setup
-
-1. Format SD card as **FAT32**
-2. Copy MP3 files to root directory:
-```
-/
-├── song1.mp3
-├── song2.mp3
-├── song3.mp3
-└── ...
-```
-
-3. Insert SD card into Cardputer-Adv
-4. Power on - player starts automatically!
+* ✅ **Dual Screen Support** - Renders a custom high-res GUI on an external ILI9341 (320x240) while showing status text on the internal ST7789 screen.
+* ✅ **Headless Mode** - If no external display is connected, the player remains fully functional using the internal screen text interface.
+* ✅ **Format Support** - Plays both **MP3** and **FLAC** files.
+* ✅ **ES8311 Codec** - Native support for the Cardputer-Adv internal audio codec via `M5Cardputer.Speaker`.
+* ✅ **Advanced Navigation** - Full support for **Subdirectories** and deep folder structures.
+* ✅ **Persistence** - Automatically saves the last playback position and current directory to the SD card (`/player` folder). It resumes exactly where you left off after a reboot.
+* ✅ **Queue Visibility** - Displays the currently playing track and highlights the next track in the list.
+* ✅ **Multithreading** - Utilizes ESP32 dual-core capabilities (FreeRTOS) to separate UI rendering (Core 0) from Audio decoding (Core 1) for stutter-free playback.
+* ✅ **Battery Indicator** - Real-time voltage reading on the UI.
 
 ## 🔧 Hardware Configuration
 
-### SD Card Pins (SPI)
-- SCK: GPIO 40
-- MISO: GPIO 39
-- MOSI: GPIO 14
-- CS: GPIO 12
+This project is specifically designed and tested on the **M5Stack Cardputer Adv**.
 
-### Audio
-- Uses built-in **ES8311** codec
-- Output: Built-in speaker or 3.5mm jack (auto-switch)
+### 📺 External Display Setup (ILI9341)
+
+To avoid conflicts between the internal SD Card and the external display on the default SPI bus, this project uses a **custom pin mapping** on the HSPI bus.
+
+
+
+**Wiring for ILI9341 (320x240):**
+
+| ILI9341 Pin | Cardputer GPIO | Note |
+| :--- | :--- | :--- |
+| **MISO** | **Disconnected** | Not used to prevent bus contention |
+| **CS** | **GPIO 5** | Chip Select |
+| **DC** | **GPIO 6** | Data/Command |
+| **RST** | **GPIO 3** | Reset |
+| **SCLK** | **GPIO 15** | Clock (Modified from standard) |
+| **MOSI** | **GPIO 13** | Data (Modified from standard) |
+
+## 💾 SD Card Setup
+
+1.  Format your SD card as **FAT32**.
+2.  **IMPORTANT:** Copy the contents of the `SDFiles` folder (found in this repository) to the **root** of your SD card. This ensures the system folder structure is ready.
+3.  Add your music files (`.mp3`, `.flac`) to the root or organize them into any subfolders you like.
+
+## 🎮 Controls
+
+The controls are optimized for the Cardputer keyboard:
+
+| Key | Function |
+| :--- | :--- |
+| `A` | **Play / Pause** ▶️⏸️ |
+| `S` | **Stop** ⏹️ |
+| `V` | **Volume Cycle** 🔊 (Cycles through levels) |
+| `,` | **Scroll Up / Previous File** ⬆️ |
+| `.` | **Scroll Down / Next File** ⬇️ |
+| `ENTER`| **Select** (Play File or Open Directory) ↵ |
+| `ESC` | **Help / Back** (Show on-screen help) |
 
 ## 📝 Technical Details
 
 ### Architecture
+The system leverages the ESP32's dual cores to ensure high-quality audio streaming while maintaining a responsive UI.
+* **Core 0:** Handles the User Interface (TFT drawing on ILI9341), input handling, and file browsing.
+* **Core 1:** Dedicated strictly to Audio Decoding (MP3/FLAC) and feeding the I2S/ES8311 pipeline to prevent audio glitches during screen refreshes.
 
-- **FreeRTOS Tasks:**
-  - `Task_TFT` (Core 0) - Display and keyboard handling
-  - `Task_Audio` (Core 1) - MP3 decoding and playback
+### Graphics & Assets
+To keep the file system clean and the UI fast, all graphical assets (Logos, Buttons, Codec Icons) are converted into C++ Hex Arrays and stored directly in the firmware via `Logo.h` and `Buttons.h`. No external image files are needed on the SD card for the UI.
 
-- **Audio Pipeline:**
-  ```
-  SD Card → AudioFileSourceSD → AudioFileSourceID3 → 
-  AudioGeneratorMP3 → AudioOutputM5CardputerSpeaker → 
-  M5Cardputer.Speaker (ES8311)
-  ```
+### State Saving
+The player automatically creates a hidden system folder named `/player` on your SD card. It stores a `last_pos.txt` file here, ensuring persistence across power cycles.
 
-- **Custom AudioOutput:**
-  - Triple buffering for smooth playback
-  - Uses `M5Cardputer.Speaker.playRaw()` for PCM output
-  - Automatic buffer management
+## 📦 Required Libraries
 
-### Key Adaptations from Original M5Mp3
+Ensure you have the following installed via PlatformIO or Arduino Library Manager:
 
-1. **Replaced ESP32-audioI2S** → **ESP8266Audio**
-   - Better compatibility with M5Cardputer API
-   - Cleaner integration
-
-2. **Custom AudioOutput class:**
-   - `AudioOutputM5CardputerSpeaker` wraps `M5Cardputer.Speaker`
-   - Handles triple buffering
-   - Manages playback state
-
-3. **Removed I2S pins:**
-   - No need for I2S_DOUT, I2S_BCLK, I2S_LRCK
-   - Uses ES8311 via M5Cardputer.Speaker API
-
-4. **Battery reading:**
-   - Uses `M5Cardputer.Power.getBatteryVoltage()` instead of `analogRead(10)`
-
-## 🐛 Troubleshooting
-
-### No sound?
-- Check SD card is inserted correctly
-- Verify MP3 files are in root directory
-- Check volume level (press `V` to increase)
-
-### SD card not detected?
-- Format as FAT32
-- Check card is inserted fully
-- Try different SD card
-
-### Playback stuttering?
-- Use lower bitrate MP3 files (128-192 kbps recommended)
-- Check SD card speed class (Class 10 recommended)
-
-### Files not showing?
-- Only `.mp3` files are scanned
-- Files must be in root directory (not in subfolders)
-- Maximum 100 files supported
-
-## 📚 Based On
-
-- Original: https://github.com/VolosR/M5Mp3
-- Adapted for: M5Stack Cardputer-Adv (ES8311)
+1.  **ESP8266Audio** (by Earle Philhower) - For MP3/FLAC decoding.
+2.  **M5Cardputer** / **M5Unified** - For hardware abstraction.
+3.  **TFT_eSPI** - For driving the external display (configured for HSPI).
 
 ## 📄 License
 
-Same as original M5Mp3 project.
+This project shares the same license as the original [M5Mp3 project](https://github.com/VolosR/M5Mp3).
 
-## 🎯 Future Improvements
+---
 
-- [ ] Support for subdirectories
-- [ ] WAV file support
-- [ ] ID3 tag display (artist, title)
-- [ ] Playlist support
-- [ ] External display support (ILI9488)
-- [ ] Shuffle mode
-- [ ] Repeat mode
-
+*Disclaimer: This software is provided "as is" without warranty of any kind. Please double-check your wiring before powering on the device to avoid damaging your Cardputer or external display.*
