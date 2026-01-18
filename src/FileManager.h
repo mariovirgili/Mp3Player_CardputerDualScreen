@@ -21,10 +21,11 @@ private:
     int count = 0;
     String currentPath = "/";
 
-    // check if file extension is supported
+    // Check if file extension is supported
     bool isAudioFile(const String& name) {
         String s = name; 
         s.toLowerCase();
+        // Now ALWAYS accepts both mp3 and flac, regardless of the external screen size
         return s.endsWith(".mp3") || s.endsWith(".flac");
     }
 
