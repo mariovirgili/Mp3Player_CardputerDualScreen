@@ -1,4 +1,4 @@
-# 🎵 Mp3 Player for Cardputer-Adv (Dual Screen) - v0.1
+# 🎵 Mp3 Player for Cardputer-Adv (Dual Screen) - v0.2
 
 A robust audio player for the **M5Stack Cardputer-Adv** featuring a custom GUI on an external **ILI9341** screen, with fallback support for the internal display. Features SD card file navigation (with subdirectory support), MP3/FLAC playback, and persistent settings.
 
@@ -96,3 +96,32 @@ This project shares the same license as the original [M5Mp3 project](https://git
 ---
 
 *Disclaimer: This software is provided "as is" without warranty of any kind. Please double-check your wiring before powering on the device to avoid damaging your Cardputer or external display.*
+
+## [v0.2.0] - Dual Core & High-Res Display Support
+
+This release introduces significant architectural changes to support larger displays and improve audio stability using the ESP32-S3's dual-core capabilities.
+
+### 🚀 New Features
+* **ILI9488 Display Support:** Added native driver support for 480x320 external displays.
+    * Includes a dedicated, optimized UI layout ("Tuned Layout") for the higher resolution.
+    * Features a "Dark Mode" footer and a larger marquee area (34px height).
+* **Dual-Core Architecture:** * **Core 0:** Now dedicated to the `Task_Audio` (decoding and playback).
+    * **Core 1:** Handles the UI rendering and User Inputs.
+    * This separation helps mitigate SPI bus contention between the SD Card and the Display.
+* **Dynamic Sample Rate:** The audio engine now detects and switches sample rates automatically (supporting 44.1kHz, 48kHz, etc.).
+
+### 🛠 Improvements
+* **Smart Yielding:** Implemented a smart delay logic in the audio loop to balance CPU load between heavy FLAC decoding and UI responsiveness.
+* **Unified Metadata:** Both display versions now consistently show Bitrate and Frequency information.
+
+### ⚠️ Performance Note: FLAC on ILI9488
+Please note a performance distinction between display models due to hardware limitations (SPI Bandwidth/CPU):
+
+* **Standard ILI9341 (320x240):** FLAC playback is seamless with instant UI updates.
+* **High-Res ILI9488 (480x320):** * FLAC decoding combined with pushing 153,600 pixels over SPI is extremely resource-intensive.
+    * **Mitigation:** When loading a FLAC file on the 9488, the UI enters a temporary "Graphic Lock" state with an 800ms pre-buffering silence. This ensures the audio buffer is full before the screen turns on, preventing audio stuttering. Playback still does not work, any help is appreciated!!
+    * *MP3 playback remains unaffected and performs smoothly on both screens.*
+
+### 🐛 Bug Fixes
+* Fixed SPI conflicts causing system freezes during track change.
+* Fixed UI flickering by implementing state-check rendering for buttons and headers.
