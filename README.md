@@ -1,6 +1,6 @@
 # 🎵 Mp3 Player for Cardputer-Adv (Dual Screen) - v0.2
 
-A robust audio player for the **M5Stack Cardputer-Adv** featuring a custom GUI on an external **ILI9341** screen, with fallback support for the internal display. Features SD card file navigation (with subdirectory support), MP3/FLAC playback, and persistent settings.
+A robust audio player for the **M5Stack Cardputer-Adv** featuring a custom GUI on an external 240x320 **ILI9341** screen (partial support for ILI9488@480x320), with fallback support for the internal display. Features SD card file navigation (with subdirectory support), MP3/FLAC playback, and persistent settings.
 
 ## 🙏 Credits & Inspiration
 
@@ -17,7 +17,7 @@ This project is a heavy modification and evolution of existing works by the M5St
 
 ## ✨ Features
 
-* ✅ **Dual Screen Support** - Renders a custom high-res GUI on an external ILI9341 (320x240) while showing status text on the internal ST7789 screen.
+* ✅ **Dual Screen Support** - Renders a custom high-res GUI on an external ILI9341 (320x240) while showing status text on the internal ST7789 screen (see 0.2 changelogs for ILI9488 support).
 * ✅ **Headless Mode** - If no external display is connected, the player remains fully functional using the internal screen text interface.
 * ✅ **Format Support** - Plays both **MP3** and **FLAC** files.
 * ✅ **ES8311 Codec** - Native support for the Cardputer-Adv internal audio codec via `M5Cardputer.Speaker`.
@@ -31,13 +31,13 @@ This project is a heavy modification and evolution of existing works by the M5St
 
 This project is specifically designed and tested on the **M5Stack Cardputer Adv**.
 
-### 📺 External Display Setup (ILI9341)
+### 📺 External Display Setup (ILI9341 and ILI9488)
 
 To avoid conflicts between the internal SD Card and the external display on the default SPI bus, this project uses a **custom pin mapping** on the HSPI bus.
 
 
 
-**Wiring for ILI9341 (320x240):**
+**Wiring for ILI9341 (320x240) and ILI9488 (480x320):**
 
 | ILI9341 Pin | Cardputer GPIO | Note |
 | :--- | :--- | :--- |
@@ -119,7 +119,8 @@ Please note a performance distinction between display models due to hardware lim
 
 * **Standard ILI9341 (320x240):** FLAC playback is seamless with instant UI updates.
 * **High-Res ILI9488 (480x320):** * FLAC decoding combined with pushing 153,600 pixels over SPI is extremely resource-intensive.
-    * **Mitigation:** When loading a FLAC file on the 9488, the UI enters a temporary "Graphic Lock" state with an 800ms pre-buffering silence. This ensures the audio buffer is full before the screen turns on, preventing audio stuttering. Playback still does not work, any help is appreciated!!
+    * **Mitigation:** When loading a FLAC file on the 9488, the UI enters a temporary "Graphic Lock" state with an 800ms pre-buffering silence. This ensures the audio buffer is full before the screen turns on, preventing audio stuttering.
+    * **FLAC playback still does not work**, any help is appreciated!!
     * *MP3 playback remains unaffected and performs smoothly on both screens.*
 
 ### 🐛 Bug Fixes
