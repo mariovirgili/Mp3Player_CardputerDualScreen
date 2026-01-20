@@ -54,7 +54,7 @@ PlayerState currentState = STATE_STOPPED;
 
 // CONTROL FLAGS
 bool nextS = false;
-bool volUp = false;
+bool volUp = false; // Flag to indicate volume changed (up or down) to update UI
 bool showHelp = false; 
 bool helpRedrawNeeded = false; 
 bool forceFullRedraw = true; 
@@ -169,9 +169,9 @@ void drawInternalBrowser() {
   M5Cardputer.Display.setTextDatum(TC_DATUM); 
   
   M5Cardputer.Display.setTextColor(TFT_ORANGE);
-  M5Cardputer.Display.drawString("Mp3 Player v0.2 - Browser", 120, 5); 
+  M5Cardputer.Display.drawString("Mp3 Player v0.2.1 - Browser", 120, 5); 
   M5Cardputer.Display.setTextColor(TFT_LIGHTGREY);
-  M5Cardputer.Display.drawString("H: Help | A: Play | S: Stop", 120, 15);
+  M5Cardputer.Display.drawString("H: Help | P: Play | S: Stop", 120, 15);
   M5Cardputer.Display.drawFastHLine(0, 26, 240, TFT_DARKGREY);
   M5Cardputer.Display.setTextDatum(TL_DATUM); 
   
@@ -214,10 +214,11 @@ void drawInternalHelp() {
   M5Cardputer.Display.setTextDatum(TL_DATUM);
   M5Cardputer.Display.setTextColor(TFT_WHITE);
   int y = 30; int x = 20; int spacing = 14; 
-  M5Cardputer.Display.drawString("A       : Play / Pause", x, y); y += spacing;
+  // UPDATED HELP TEXT (Display + / - as requested)
+  M5Cardputer.Display.drawString("P       : Play / Pause", x, y); y += spacing;
   M5Cardputer.Display.drawString("S       : Stop", x, y); y += spacing;
-  M5Cardputer.Display.drawString("N / P   : Next / Prev Track", x, y); y += spacing;
-  M5Cardputer.Display.drawString("V       : Volume Up", x, y); y += spacing;
+  M5Cardputer.Display.drawString("[ / ]   : Prev / Next Track", x, y); y += spacing;
+  M5Cardputer.Display.drawString("+ / -   : Volume Up / Down", x, y); y += spacing;
   M5Cardputer.Display.drawString("; / .   : Nav Up / Down", x, y); y += spacing;
   M5Cardputer.Display.drawString("ENTER   : Select / Open", x, y); y += spacing;
   M5Cardputer.Display.setTextDatum(TC_DATUM);
@@ -247,10 +248,11 @@ void drawHelpScreen() {
       yStart += lineH;
   };
 
-  drawLine("A", "Play / Pause");
+  // UPDATED HELP TEXT FOR NEW LAYOUT
+  drawLine("P", "Play / Pause");
   drawLine("S", "Stop Playback");
-  drawLine("N / P", "Next / Prev Track");
-  drawLine("V", "Volume Up");
+  drawLine("[ / ]", "Prev / Next Track");
+  drawLine("+ / -", "Volume Up / Down");
   drawLine("; / .", "Nav Up / Down");
   drawLine("ENTER", "Select / Open");
   
@@ -539,7 +541,7 @@ void drawWinampExternal() {
 
   activeSprite.pushSprite(0, middleStartY);
 
-  // --- 3. FOOTER (FIX: BLACK FOOTER ONLY FOR 9488) ---
+  // --- 3. FOOTER ---
   uint16_t footerCol = bgPanel;
   #if defined(USE_ILI9488)
      footerCol = TFT_BLACK;
@@ -554,6 +556,10 @@ void drawWinampExternal() {
       
       lastBattDrawn = -1;
       lastVolDrawn = -1;
+      
+      // FIX: Force redraw of buttons when returning from Help/Menu
+      lastBtnState = (PlayerState)-1; 
+      
       forceFullRedraw = false;
   }
 
@@ -730,26 +736,48 @@ void loop() {
     }
 
     if (!showHelp) {
+      // NAVIGATION (Semicolon / Dot)
       if (M5Cardputer.Keyboard.isKeyPressed(';')) { cursorIdx = (cursorIdx - 1 + FM.getCount()) % FM.getCount(); needInternalRedraw = true; }
       if (M5Cardputer.Keyboard.isKeyPressed('.')) { cursorIdx = (cursorIdx + 1) % FM.getCount(); needInternalRedraw = true; }
+      
+      // SELECT (Enter)
       if (M5Cardputer.Keyboard.isKeyPressed(13) || M5Cardputer.Keyboard.isKeyPressed(10) || M5Cardputer.Keyboard.isKeyPressed(KEY_ENTER)) {
         String newFile;
         if (FM.handleSelection(cursorIdx, newFile)) {
           activeFilePath = newFile; playingCursorIdx = cursorIdx; nextS = true; 
         } else { cursorIdx = 0; needInternalRedraw = true; }
       }
-      if (M5Cardputer.Keyboard.isKeyPressed('a')) { 
+
+      // PLAY / PAUSE (Changed to 'p')
+      if (M5Cardputer.Keyboard.isKeyPressed('p')) { 
         if (currentState == STATE_PLAYING) { currentState = STATE_PAUSED; pausedAt = millis(); } 
         else if (currentState == STATE_PAUSED) { currentState = STATE_PLAYING; trackStartTime += (millis() - pausedAt); pausedAt = 0; }
-        else if (currentState == STATE_STOPPED && activeFilePath != "") { nextS = true; }
+        else if (currentState == STATE_STOPPED) { 
+            // PLAY SELECTION FROM BROWSER IF STOPPED
+            String newFile;
+            if (FM.handleSelection(cursorIdx, newFile)) {
+               activeFilePath = newFile; playingCursorIdx = cursorIdx; nextS = true;
+            }
+        }
       }
+
+      // STOP (Remains 's')
       if (M5Cardputer.Keyboard.isKeyPressed('s')) { if (audioGen) audioGen->stop(); currentState = STATE_STOPPED; trackStartTime = 0; }
-      if (M5Cardputer.Keyboard.isKeyPressed('v')) { volume = (volume + 3) % 24; volUp = true; }
-      if (M5Cardputer.Keyboard.isKeyPressed('n')) { 
+
+      // VOLUME UP ('=' mapped to +)
+      if (M5Cardputer.Keyboard.isKeyPressed('=') || M5Cardputer.Keyboard.isKeyPressed('+')) { volume = min(21, volume + 3); volUp = true; }
+      
+      // VOLUME DOWN ('_' mapped to -)
+      if (M5Cardputer.Keyboard.isKeyPressed('_') || M5Cardputer.Keyboard.isKeyPressed('-')) { volume = max(0, volume - 3); volUp = true; }
+
+      // NEXT TRACK (']')
+      if (M5Cardputer.Keyboard.isKeyPressed(']')) { 
         int newIndex; String next = FM.getNextAudio(cursorIdx, 1, newIndex);
         if (next != "") { cursorIdx = newIndex; playingCursorIdx = newIndex; activeFilePath = next; nextS = true; }
       }
-      if (M5Cardputer.Keyboard.isKeyPressed('p')) { 
+
+      // PREV TRACK ('[')
+      if (M5Cardputer.Keyboard.isKeyPressed('[')) { 
         int newIndex; String prev = FM.getNextAudio(cursorIdx, -1, newIndex); 
         if (prev != "") { cursorIdx = newIndex; playingCursorIdx = newIndex; activeFilePath = prev; nextS = true; }
       }
